@@ -1,0 +1,84 @@
+/* PromptsNew.module.css와 Playground.module.css의 관련 스타일을 통합 */
+
+.chatEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #020817;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px;
+}
+.messageRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.dragHandleWrapper {
+    cursor: move;
+    padding-top: 6px; /* 아이콘 위치 조절 */
+}
+.dragHandle {
+  color: #64748b;
+}
+.roleSelect {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #cbd5e1;
+  font-size: 13px;
+  padding: 6px 8px;
+  width: 110px;
+}
+.placeholderRole {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #cbd5e1;
+  font-size: 13px;
+  padding: 6px 8px;
+  width: 110px;
+  box-sizing: border-box;
+  text-align: center;
+}
+.messageTextarea {
+  flex-grow: 1;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #e2e8f0;
+  font-size: 14px;
+  padding: 6px 10px;
+  resize: vertical;
+  min-height: 32px;
+}
+.removeButton {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  margin-top: 2px;
+}
+.removeButton:hover {
+  color: #ef4444;
+}
+.chatActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.addBtn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+}
+.addBtn:hover {
+  color: #e2e8f0;
+}

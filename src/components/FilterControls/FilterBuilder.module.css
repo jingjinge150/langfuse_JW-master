@@ -1,0 +1,107 @@
+/* src/components/FilterControls/FilterBuilder.module.css */
+.container {
+  position: relative;
+}
+
+.badge {
+  background-color: #334155;
+  color: #e2e8f0;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 2px;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px;
+  z-index: 10;
+  width: 550px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ▼▼▼ 이 부분 수정 ▼▼▼ */
+.filterRow {
+  display: flex; /* grid 대신 flex 사용 */
+  gap: 8px;
+  align-items: center; /* flexbox의 수직 중앙 정렬 */
+}
+
+.conjunction {
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: right;
+  flex-basis: 50px; /* 고정 너비 설정 */
+  flex-shrink: 0;
+  padding-right: 8px;
+}
+
+.select, .input {
+  background-color: #1e293b;
+  border: 1px solid #4b5569;
+  border-radius: 4px;
+  color: #cbd5e1;
+  font-size: 13px;
+  padding: 6px 8px;
+  height: 32px;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* flex-grow를 이용해 너비 비율 설정 */
+.select {
+  flex: 1 1 0%;
+}
+.input {
+  flex: 1.5 1 0%;
+}
+/* ▲▲▲ 이 부분 수정 ▲▲▲ */
+
+
+.select:focus, .input:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+}
+.removeButton:hover {
+  background-color: #334155;
+  color: #ef4444;
+}
+
+.addButton {
+  background-color: transparent;
+  border: 1px solid #4b5563;
+  color: #94a3b8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  transition: all 0.2s ease;
+}
+.addButton:hover {
+  border-color: #e2e8f0;
+  color: #e2e8f0;
+}

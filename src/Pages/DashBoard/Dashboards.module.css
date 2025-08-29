@@ -1,0 +1,264 @@
+/* Prompts.module.css를 기반으로 일관성 유지 */
+.container {
+    color: #f8fafc;
+    background-color: #020817;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+  }
+  
+  /* 1. 헤더 */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .title h1 {
+    font-size: 24px;
+    margin: 0;
+    font-weight: 600;
+  }
+  
+  .infoIcon {
+    color: #64748b;
+    cursor: pointer;
+  }
+  
+  .primaryButton {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f8fafc;
+    color: #020817;
+    border: 1px solid #f8fafc;
+  }
+  
+  .primaryButton:hover {
+    filter: brightness(0.9);
+  }
+  
+  /* 2. 탭 */
+  .tabs {
+    border-bottom: 1px solid #1e293b;
+    display: flex;
+  }
+  
+  .tabButton {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  
+  .tabButton.active {
+    color: #f1f5f9;
+    border-bottom-color: #f1f5f9;
+  }
+  
+  /* 3. 테이블 */
+  .tableContainer {
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    overflow-x: auto; /* 내용이 길어질 경우 가로 스크롤 */
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .table th,
+  .table td {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 1px solid #1e293b;
+    white-space: nowrap;
+  }
+  
+  .table td {
+      color: #cbd5e1;
+  }
+  
+  .table td:nth-child(2) { /* Description column */
+      white-space: normal;
+      min-width: 400px;
+  }
+  
+  .table th {
+    color: #94a3b8;
+    font-weight: 500;
+    background-color: #020817;
+  }
+  
+  .table th:first-child,
+  .table td:first-child {
+    padding-left: 24px;
+  }
+  
+  .table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .dashboardLink {
+    color: #f1f5f9;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .dashboardLink:hover {
+    text-decoration: underline;
+  }
+  
+  .ownerCell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .actionsCell {
+    display: flex;
+    justify-content: flex-start;
+  }
+  
+  .iconButton {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+  }
+  
+  .iconButton:hover {
+    background-color: #334155;
+    color: white;
+  }
+  .iconButton:disabled {
+    color: #475569;
+    cursor: not-allowed;
+  }
+  
+  /* 테이블 컨텐츠 영역 추가 */
+  .contentArea {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+  }
+
+/* Dashboards.module.css에 추가할 액션 드롭다운 스타일들 */
+
+/* 정렬 가능한 헤더 */
+.sortableHeader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.sortableHeader:hover {
+  color: #f8fafc;
+}
+
+/* 정렬 아이콘 */
+.sortIcon {
+  color: #64748b;
+  transition: color 0.2s ease;
+}
+
+.sortIconActive {
+  color: #f8fafc;
+}
+
+/* 액션 드롭다운 컨테이너 */
+.actionDropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* 액션 버튼 (기존 iconButton 스타일과 일치) */
+.actionButton {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.actionButton:hover {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+/* 드롭다운 메뉴 (다크 테마) */
+.dropdownMenu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 1000;
+  min-width: 120px;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+/* 드롭다운 아이템 */
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdownItem:hover {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+/* 삭제 아이템 (빨간색, 다크 테마용) */
+.dropdownItem.deleteItem {
+  color: #f87171;
+}
+
+.dropdownItem.deleteItem:hover {
+  background-color: #450a0a;
+  color: #fca5a5;
+}
