@@ -1,4 +1,3 @@
-// src/Pages/Widget/services/preview.js
 import { FiltersAPI } from "./filters.js";
 
 export class PreviewAPI extends FiltersAPI {
@@ -13,16 +12,92 @@ export class PreviewAPI extends FiltersAPI {
       histogram: "HISTOGRAM",
       pie: "PIE",
       table: "PIVOT_TABLE",
+      LINE_TIME_SERIES: "LINE_TIME_SERIES",
+      BAR_TIME_SERIES: "BAR_TIME_SERIES",
+      VERTICAL_BAR: "VERTICAL_BAR",
+      HORIZONTAL_BAR: "HORIZONTAL_BAR",
+      NUMBER: "NUMBER",
+      HISTOGRAM: "HISTOGRAM",
+      PIE: "PIE",
+      PIVOT_TABLE: "PIVOT_TABLE",
     };
-    return map[type] || type || "NUMBER";
+    return map[type] || "NUMBER";
   }
 
   buildChartConfig(chartType, chartConfig) {
     const type = this.toAPIChartType(chartType);
-    if (chartConfig && typeof chartConfig === "object") {
-      return { type, ...chartConfig };
-    }
-    return { type };
+    return chartConfig && typeof chartConfig === "object"
+      ? { type, ...chartConfig }
+      : { type };
+  }
+
+  sanitizeFilters(inputFilters = [], columns = []) {
+    const alias = { user: "userId", session: "sessionId", traceName: "name" };
+    const opMap = {
+      contains: "CONTAINS",
+      "not contains": "NOT_CONTAINS",
+      not_contains: "NOT_CONTAINS",
+      in: "IN",
+      not_in: "NOT_IN",
+      "=": "=",
+      "is equal to": "=",
+      is: "=",
+      "!=": "!=",
+      ">": ">",
+      "<": "<",
+      ">=": ">=",
+      "<=": "<=",
+    };
+
+    const colMeta = Object.fromEntries(
+      (columns || []).map((c) => [c.id || c.column || c.name, c])
+    );
+
+    const cleaned = (inputFilters || [])
+      .map((f) => {
+        const rawCol = f.field ?? f.column ?? f.id ?? f.name;
+        if (!rawCol) return null;
+
+        const column = alias[rawCol] || rawCol;
+
+        let operator = (f.operator || f.op || "contains").toString().toLowerCase();
+        operator = opMap[operator] || "CONTAINS";
+
+        let value = f.value ?? f.values ?? (f.list ? [...f.list] : undefined);
+
+        if ((operator === "IN" || operator === "NOT_IN") && typeof value === "string") {
+          value = value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+
+        const type = colMeta[rawCol]?.type || "string";
+        if (type === "arrayOptions" && !Array.isArray(value)) {
+          value = value != null ? [value] : [];
+        }
+
+        return { column, operator, value };
+      })
+      .filter(
+        (f) =>
+          f &&
+          f.column &&
+          f.operator &&
+          !(
+            f.value == null ||
+            (typeof f.value === "string" && f.value.trim() === "") ||
+            (Array.isArray(f.value) && f.value.length === 0)
+          )
+      );
+
+    const seen = new Set();
+    return cleaned.filter((f) => {
+      const k = `${f.column}|${f.operator}|${JSON.stringify(f.value)}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
   }
 
   async executeQuery(params = {}, columns = []) {
@@ -39,9 +114,13 @@ export class PreviewAPI extends FiltersAPI {
       chartConfig = null,
     } = params;
 
-    const serverFilters = this.serializeFilters
-      ? this.serializeFilters(filters, columns)
-      : filters;
+    const serialized =
+      typeof this.serializeFilters === "function"
+        ? this.serializeFilters(filters, columns)
+        : filters;
+
+    const cleanFilters = this.sanitizeFilters(serialized, columns);
+
     const dims = (dimensions || []).map((d) =>
       typeof d === "string" ? { field: d } : d
     );
@@ -57,8 +136,8 @@ export class PreviewAPI extends FiltersAPI {
         view,
         dimensions: dims,
         metrics: normalizedMetrics,
-        filters: serverFilters,
-        timeDimension,
+        filters: cleanFilters,
+        timeDimension: timeDimension || { granularity: "auto" },
         fromTimestamp:
           fromTimestamp || new Date(Date.now() - 7 * 86400000).toISOString(),
         toTimestamp: toTimestamp || new Date().toISOString(),
@@ -67,32 +146,23 @@ export class PreviewAPI extends FiltersAPI {
       },
     };
 
-    // 여러 API 엔드포인트 시도
-    const endpoints = [
-      "dashboard.executeQuery",
-      "analytics.query",
-      "traces.aggregate",
-      "dashboard.query",
-    ];
+    const workingEndpoints = ["dashboard.executeQuery"];
 
-    for (const endpoint of endpoints) {
+    for (const endpoint of workingEndpoints) {
       try {
         console.log(`차트 API 시도: ${endpoint}`);
         const data = await this.trpcGet(endpoint, payload);
-
         if (data) {
           console.log(`차트 API 성공: ${endpoint}`, data);
-          return this.processChartData(data, chartType);
+          return this.processChartData(data, this.toAPIChartType(chartType));
         }
       } catch (error) {
-        console.log(`차트 API 실패: ${endpoint}`, error.message);
-        continue;
+        console.log(`차트 API 실패: ${endpoint}`, error?.message || error);
       }
     }
 
-    // 모든 API 실패 시 목업 데이터 반환
-    console.warn("모든 차트 API 실패, 목업 데이터 사용");
-    return this.getMockChartData(chartType, params);
+    console.warn("차트 API 실패, 목업 데이터 사용");
+    return this.getMockChartData(this.toAPIChartType(chartType), params);
   }
 
   processChartData(data, chartType) {
@@ -107,7 +177,6 @@ export class PreviewAPI extends FiltersAPI {
           if (Array.isArray(p)) {
             return { x: p[0], y: Number(p[1]) || 0 };
           }
-
           const x =
             p.time ||
             p.timestamp ||
@@ -119,13 +188,11 @@ export class PreviewAPI extends FiltersAPI {
           const y = Number(
             p.value ?? p.y ?? p.count ?? p.total ?? p.metric ?? 0
           );
-
           return { x, y, ...p };
         })
         .filter(Boolean);
     }
 
-    // 데이터가 없으면 목업 데이터 생성
     if (chartData.length === 0) {
       chartData = this.generateMockChartData(chartType);
     }
@@ -159,29 +226,27 @@ export class PreviewAPI extends FiltersAPI {
       case "LINE_TIME_SERIES":
       case "BAR_TIME_SERIES":
         return [
-          { x: getDate(6), y: 45 },
-          { x: getDate(5), y: 67 },
-          { x: getDate(4), y: 89 },
-          { x: getDate(3), y: 56 },
-          { x: getDate(2), y: 78 },
-          { x: getDate(1), y: 92 },
-          { x: getDate(0), y: 134 },
+          { x: getDate(6), y: 0 },
+          { x: getDate(5), y: 0 },
+          { x: getDate(4), y: 0 },
+          { x: getDate(3), y: 0 },
+          { x: getDate(2), y: 0 },
+          { x: getDate(1), y: 0 },
+          { x: getDate(0), y: 0 },
         ];
-
       case "PIE":
       case "VERTICAL_BAR":
       case "HORIZONTAL_BAR":
         return [
-          { x: "Production", y: 234 },
-          { x: "Staging", y: 89 },
-          { x: "Development", y: 45 },
+          { x: "Production", y: 0 },
+          { x: "Staging", y: 0 },
+          { x: "Development", y: 0 },
         ];
-
       default:
         return [
-          { x: "Sample 1", y: 100 },
-          { x: "Sample 2", y: 75 },
-          { x: "Sample 3", y: 50 },
+          { x: "Sample 1", y: 0 },
+          { x: "Sample 2", y: 0 },
+          { x: "Sample 3", y: 0 },
         ];
     }
   }
@@ -202,15 +267,13 @@ export class PreviewAPI extends FiltersAPI {
     };
   }
 
-  // 필터 직렬화 (없으면 빈 함수)
-  serializeFilters(filters, columns) {
+  serializeFilters(filters) {
     if (!Array.isArray(filters)) return [];
-
-    return filters.map((filter) => ({
-      field: filter.field || filter.column,
-      operator: filter.operator || "equals",
-      value: filter.value,
-      type: filter.type || "string",
+    return filters.map((f) => ({
+      field: f.field || f.column || f.id || f.name,
+      operator: f.operator || "contains",
+      value: f.value ?? f.values,
+      type: f.type || "string",
     }));
   }
 }

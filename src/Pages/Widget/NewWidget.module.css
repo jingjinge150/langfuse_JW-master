@@ -1,6 +1,17 @@
+/* ---- 공통: 차트 영역 높이 보장 ---- */
+.chartWrapper {
+  width: 100%;
+  height: 100%;
+  min-height: 320px; /* ✅ 부모 높이 보장 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- 페이지 레이아웃 ---- */
 .pageWrap {
   display: grid;
-  grid-template-columns: 380px minmax(0, 1fr);
+  grid-template-columns: 380px minmax(0, 1fr); /* ✅ 우측 칼럼 수축 허용 */
   gap: 16px;
   width: 100%;
   padding: 16px;
@@ -15,21 +26,36 @@
   border-radius: 12px;
   padding: 16px;
   overflow: hidden;
+  min-width: 0; /* (안전) */
 }
 
+/* ✅ 우측 그리드 자식: 반드시 min-width:0 */
+.rightPane {
+  min-width: 0;         /* ⭐️ grid/flex 아이템이 width=0 되지 않게 */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ✅ 차트 컨테이너: 폭/높이 전달용 래퍼 */
+.chartContainer {
+  min-width: 0;         /* ⭐️ ResponsiveContainer 폭 계산 가능 */
+  min-height: 320px;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- 폼/기타 ---- */
 .section {
   padding-bottom: 16px;
   border-bottom: 1px dashed #1e293b;
   margin-bottom: 16px;
 }
-.section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
+.section:last-child { border-bottom: none; margin-bottom: 0; }
 
-.block {
-  margin-top: 12px;
-}
+.block { margin-top: 12px; }
 
 .label {
   display: block;
@@ -67,31 +93,11 @@
   font-weight: 800;
   cursor: pointer;
 }
-.primaryBtn:hover {
-  background: #0b0f19;
-}
+.primaryBtn:hover { background: #0b0f19; }
 
-.rightPane {
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 12px;
-  padding: 20px;
-  min-width: 0;
-}
-
-.previewHeader {
-  margin-bottom: 16px;
-}
-.previewTitle {
-  font-size: 22px;
-  font-weight: 800;
-  color: #f8fafc;
-}
-.previewDesc {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #94a3b8;
-}
+.previewHeader { margin-bottom: 16px; }
+.previewTitle { font-size: 22px; font-weight: 800; color: #f8fafc; }
+.previewDesc { margin-top: 4px; font-size: 13px; color: #94a3b8; }
 
 /* 반응형 */
 @media (max-width: 980px) {

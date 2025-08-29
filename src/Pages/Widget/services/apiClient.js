@@ -86,6 +86,7 @@ export class ApiClient {
       throw new Error(`${method} ${endpoint} failed: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    return data?.result?.data || data;
   }
 }

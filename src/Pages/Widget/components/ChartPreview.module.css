@@ -99,3 +99,214 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* 새로운 차트 시스템을 위한 추가 스타일들 */
+.chartWrapper {
+  height: 300px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chartComponent {
+  width: 100%;
+  height: 100%;
+}
+
+/* Tailwind 대체 클래스들 (다크 테마 적용) */
+.flex {
+  display: flex;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.items-baseline {
+  align-items: baseline;
+}
+
+.gap-1 {
+  gap: 0.25rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.font-extrabold {
+  font-weight: 800;
+}
+
+.tracking-tight {
+  letter-spacing: -0.025em;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-gray-500 {
+  color: #94a3b8; /* 다크 테마에 맞게 밝게 조정 */
+}
+
+.text-gray-900 {
+  color: #f8fafc; /* 다크 테마에 맞게 밝은 색으로 */
+}
+
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.pointer-events-none {
+  pointer-events: none;
+}
+
+/* 폰트 크기 클래스들 */
+.text-8xl {
+  font-size: 6rem;
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.text-7xl {
+  font-size: 4.5rem;
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  color: #f8fafc;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  color: #f8fafc;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: #f8fafc;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  color: #f8fafc;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  color: #f8fafc;
+}
+
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  color: #f8fafc;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #f8fafc;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #f8fafc;
+}
+
+/* PivotTable을 위한 테이블 스타일 (다크 테마) */
+.tableContainer {
+  height: 300px;
+  overflow-y: auto;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  background: #1f2937;
+}
+
+.previewTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  color: #f8fafc;
+}
+
+.previewTable thead {
+  background-color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.previewTable th,
+.previewTable td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #374151;
+}
+
+.previewTable th {
+  font-weight: 600;
+  color: #f8fafc;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.previewTable td {
+  color: #d1d5db;
+}
+
+.previewTable tbody tr:hover {
+  background-color: #374151;
+}
+
+.tableFooter {
+  padding: 0.75rem 1rem;
+  background-color: #374151;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  border-top: 1px solid #4b5563;
+}
