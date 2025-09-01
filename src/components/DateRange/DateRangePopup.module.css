@@ -42,11 +42,15 @@
   align-items: center;
   justify-content: center;
 }
-.navButton:hover { 
-  background-color: #1e293b; 
+.navButton:hover {
+  background-color: #1e293b;
 }
-.navLeft { left: 16px; }
-.navRight { right: 16px; }
+.navLeft {
+  left: 16px;
+}
+.navRight {
+  right: 16px;
+}
 
 .monthContainer {
   flex: 1;
@@ -88,19 +92,19 @@
   cursor: default;
   background-color: transparent !important;
 }
-.dayCell:not(:disabled):hover { 
-  background-color: #334155; 
+.dayCell:not(:disabled):hover {
+  background-color: #334155;
 }
-.dayCell.selectedRange { 
-  background-color: #1e293b; 
+.dayCell.selectedRange {
+  background-color: #1e293b;
   border-radius: 0;
 }
-.dayCell.rangeStart { 
+.dayCell.rangeStart {
   background-color: #4f46e5;
   border-top-left-radius: 9999px;
   border-bottom-left-radius: 9999px;
 }
-.dayCell.rangeEnd { 
+.dayCell.rangeEnd {
   background-color: #4f46e5;
   border-top-right-radius: 9999px;
   border-bottom-right-radius: 9999px;
@@ -187,7 +191,7 @@
 }
 
 .timezone {
-    font-size: 13px;
-    color: #94a3b8;
-    margin-left: auto;
+  font-size: 13px;
+  color: #94a3b8;
+  margin-left: auto;
 }

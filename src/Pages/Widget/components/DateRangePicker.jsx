@@ -1,101 +1,57 @@
 // src/Pages/Widget/components/DateRangePicker.jsx
-import React, { useMemo, useState } from "react";
-import styles from "../NewWidget.module.css";
+import React from "react";
 
-const PRESETS = [
-  { key: "7d", label: "Last 7 days", days: 7 },
-  { key: "14d", label: "Last 14 days", days: 14 },
-  { key: "30d", label: "Last 30 days", days: 30 },
-];
+// ✅ 팀 공용 DateRange 그대로 사용 (경로만 확인하세요)
+import GlobalDateRangePicker from "../../../components/DateRange/DateRangePicker";
 
-function toDateInputValue(d) {
-  const pad = (n) => String(n).padStart(2, "0");
-  const dt = new Date(d ?? Date.now());
-  const yyyy = dt.getFullYear();
-  const mm = pad(dt.getMonth() + 1);
-  const dd = pad(dt.getDate());
-  const hh = pad(dt.getHours());
-  const min = pad(dt.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-}
+/**
+ * 위젯 전용 어댑터:
+ * - 두 가지 프롭스 모드 모두 지원
+ *   A) startDate, endDate, setStartDate, setEndDate  (지금 NewWidgetPage에서 쓰는 방식)
+ *   B) value={{from,to}} / onChange({from,to})        (레거시/다른 페이지가 쓰는 방식)
+ * - 내부적으로 공용 DateRange를 그대로 렌더링하므로 팀원 코드에 영향 없음
+ */
+export default function WidgetDateRangePicker(props) {
+  const isControlledA =
+    "startDate" in props &&
+    "endDate" in props &&
+    "setStartDate" in props &&
+    "setEndDate" in props;
 
-export default function DateRangePicker({ value, onChange }) {
-  const { from, to, option } = value || {};
-  const [openPresets, setOpenPresets] = useState(false);
+  const isControlledB =
+    "value" in props &&
+    "onChange" in props &&
+    props.value &&
+    (props.value.from || props.value.to);
 
-  const fromInput = useMemo(
-    () => toDateInputValue(from || new Date(Date.now() - 7 * 86400000)),
-    [from]
-  );
-  const toInput = useMemo(() => toDateInputValue(to || new Date()), [to]);
+  // 현재 페이지(NewWidgetPage)는 A 모드를 사용하므로 그대로 패스.
+  if (isControlledA) {
+    const { startDate, endDate, setStartDate, setEndDate } = props;
+    return (
+      <GlobalDateRangePicker
+        startDate={startDate}
+        endDate={endDate}
+        setStartDate={setStartDate}
+        setEndDate={setEndDate}
+      />
+    );
+  }
 
-  const applyPreset = (days, key) => {
-    const end = new Date();
-    const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    onChange?.({ from: start, to: end, option: key });
-    setOpenPresets(false);
-  };
+  // 혹시 모를 레거시 모드도 안전하게 지원
+  if (isControlledB) {
+    const { value, onChange } = props;
+    return <GlobalDateRangePicker value={value} onChange={onChange} />;
+  }
 
+  // 안전장치: 아무것도 없으면 기본 7일 범위로 동작
+  const now = new Date();
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   return (
-    <div className={styles["config-section"]}>
-      <div className={styles["section-header"]}>
-        <h3>Date Range</h3>
-
-        <div className={styles["preset-dropdown"]}>
-          <button
-            type="button"
-            className={styles["preset-btn"]}
-            onClick={() => setOpenPresets((v) => !v)}
-          >
-            Presets ▾
-          </button>
-          {openPresets && (
-            <div className={styles["preset-menu"]}>
-              {PRESETS.map((p) => (
-                <div
-                  key={p.key}
-                  className={styles["preset-item"]}
-                  onClick={() => applyPreset(p.days, p.key)}
-                >
-                  {p.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className={styles["date-range-container"]}>
-        <div className={styles["form-group"]} style={{ margin: 0 }}>
-          <label>From</label>
-          <input
-            className={styles["form-input"]}
-            type="datetime-local"
-            value={fromInput}
-            onChange={(e) => {
-              const d = new Date(e.target.value);
-              onChange?.({ from: d, to: to || new Date(), option });
-            }}
-          />
-        </div>
-
-        <div className={styles["form-group"]} style={{ margin: 0 }}>
-          <label>To</label>
-          <input
-            className={styles["form-input"]}
-            type="datetime-local"
-            value={toInput}
-            onChange={(e) => {
-              const d = new Date(e.target.value);
-              onChange?.({
-                from: from || new Date(Date.now() - 7 * 86400000),
-                to: d,
-                option,
-              });
-            }}
-          />
-        </div>
-      </div>
-    </div>
+    <GlobalDateRangePicker
+      startDate={sevenDaysAgo}
+      endDate={now}
+      setStartDate={() => {}}
+      setEndDate={() => {}}
+    />
   );
 }
