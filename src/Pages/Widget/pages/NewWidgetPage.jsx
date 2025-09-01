@@ -1,3 +1,4 @@
+// src/Pages/Widget/pages/NewWidgetPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services";
@@ -9,12 +10,12 @@ import AdvancedFilters from "../components/AdvancedFilters";
 import ViewMetricSelector from "../components/ViewMetricSelector";
 import ChartTypeSelector from "../components/ChartTypeSelector";
 import ChartPreview from "../components/ChartPreview";
+import DashboardModal from "../components/DashboardModal";
 
 const toISO = (d) => (d ? new Date(d).toISOString() : null);
 const isTimeSeriesChart = (t) =>
   ["LINE_TIME_SERIES", "BAR_TIME_SERIES"].includes(String(t));
 
-/** 서버 스키마에 맞게 차원명 정규화 */
 const DIMENSION_ALIAS = {
   traceName: "name",
   user: "userId",
@@ -22,7 +23,6 @@ const DIMENSION_ALIAS = {
 };
 const normalizeDim = (dim) => DIMENSION_ALIAS[dim] ?? dim;
 
-/** 빈 값/의미 없는 필터 제거 */
 const sanitizeFilters = (filters = []) => {
   if (!Array.isArray(filters)) return [];
   return filters
@@ -30,11 +30,16 @@ const sanitizeFilters = (filters = []) => {
       const field = f.field ?? f.column ?? f.id ?? f.name;
       const operator = (f.operator ?? f.op ?? "").toString().toLowerCase();
       let value =
-        f.value ?? f.values ?? (Array.isArray(f.list) ? [...f.list] : undefined);
+        f.value ??
+        f.values ??
+        (Array.isArray(f.list) ? [...f.list] : undefined);
 
       if (typeof value === "string") value = value.trim();
 
-      if ((operator === "in" || operator === "not in") && typeof value === "string") {
+      if (
+        (operator === "in" || operator === "not in") &&
+        typeof value === "string"
+      ) {
         value = value
           .split(",")
           .map((s) => s.trim())
@@ -45,7 +50,8 @@ const sanitizeFilters = (filters = []) => {
       const isEmptyArray = Array.isArray(value) && value.length === 0;
 
       if (operator === "contains" && isEmptyString) return null;
-      if ((operator === "in" || operator === "not in") && isEmptyArray) return null;
+      if ((operator === "in" || operator === "not in") && isEmptyArray)
+        return null;
 
       return { field, operator, value, type: f.type || "string" };
     })
@@ -102,6 +108,10 @@ export default function NewWidgetPage() {
   const [previewData, setPreviewData] = useState([]);
   const [debugInfo, setDebugInfo] = useState({});
   const [showDebug, setShowDebug] = useState(false);
+
+  // Dashboard Modal
+  const [showDashboardModal, setShowDashboardModal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Auto-correct aggregation
   useEffect(() => {
@@ -167,17 +177,12 @@ export default function NewWidgetPage() {
     try {
       console.log("📋 Query being sent:", JSON.stringify(query, null, 2));
 
-      // 1) 필터 컬럼 메타
       const columnsResponse = await api.getFilterColumns(view);
       const columns = columnsResponse?.data || [];
 
-      // 2) 쿼리 실행
       const res = await api.executeQuery(query, columns);
-
-      // 3) 차트 데이터 추출
       const chartData = res?.data?.chartData || res?.chartData || [];
 
-      // 4) 디버그용
       setDebugInfo({
         query,
         columns,
@@ -186,7 +191,6 @@ export default function NewWidgetPage() {
         timestamp: new Date().toISOString(),
       });
 
-      // 5) 미리보기 데이터 반영
       setPreviewData(Array.isArray(chartData) ? chartData : []);
     } catch (e) {
       console.error("❌ Preview error:", e);
@@ -216,41 +220,84 @@ export default function NewWidgetPage() {
     refreshPreview();
   }, [refreshPreview]);
 
-  // Save
-  const handleSave = async () => {
+  // Save with Dashboard Selection - 수정된 버전
+  const handleSaveWithDashboard = async (dashboardId) => {
+    setSaving(true);
     try {
       const payload = {
-        name,
-        description,
+        name: name || "Untitled Widget",
+        description: description || "",
         view,
-        dimensions: dimension !== "none" ? [{ field: normalizeDim(dimension) }] : [],
-        metrics: [{ measure, agg: aggregation }],
-        filters: sanitizeFilters(filters),
+        dimensions: dimension !== "none" ? [normalizeDim(dimension)] : [],
+        metrics: [
+          {
+            measure,
+            aggregation: chartType === "HISTOGRAM" ? "histogram" : aggregation,
+          },
+        ],
+        filters: sanitizeFilters(filters).map((f) => ({
+          column: f.field || f.column,
+          operator: f.operator,
+          value: f.value,
+        })),
         chartType,
-        chartConfig:
-          chartType === "HISTOGRAM"
-            ? { type: chartType, bins }
-            : { type: chartType, row_limit: rowLimit },
-        projectId,
+        chartConfig: {
+          type: chartType,
+          ...(chartType === "HISTOGRAM" ? { bins } : { row_limit: rowLimit }),
+        },
         fromTimestamp: toISO(startDate),
         toTimestamp: toISO(endDate),
+        timeDimension: isTimeSeriesChart(chartType)
+          ? { granularity: "auto" }
+          : null,
       };
 
-      if (typeof api?._widgets?.createWidget === "function") {
-        await api._widgets.createWidget(payload);
-      } else if (typeof api.callTRPCAsREST === "function") {
-        await api.callTRPCAsREST("dashboardWidgets.create", "POST", payload);
-      } else {
-        alert(`Save API가 연결되어 있지 않습니다.\n\nPayload:\n${JSON.stringify(payload, null, 2)}`);
-        return;
+      // dashboardId가 있으면 포함 (Skip이면 null)
+      if (dashboardId) {
+        payload.dashboardId = dashboardId;
       }
 
-      alert("Widget saved successfully! ✅");
-      navigate("/dashboards");
-    } catch (e) {
-      console.error("❌ Save error:", e);
-      alert(`Save failed: ${e?.message || e}`);
+      console.log("💾 Saving widget:", JSON.stringify(payload, null, 2));
+
+      // API 호출
+      let result;
+      if (api._widgets && typeof api._widgets.createWidget === "function") {
+        result = await api._widgets.createWidget(payload);
+      } else {
+        result = await api.trpcPost("dashboardWidgets.create", payload);
+      }
+
+      console.log("✅ Widget saved successfully:", result);
+
+      // 성공 처리
+      if (dashboardId) {
+        alert("위젯이 대시보드에 추가되었습니다!");
+        navigate(`/dashboards/${dashboardId}`);
+      } else {
+        alert("위젯이 저장되었습니다!");
+        navigate("/dashboards", { state: { activeTab: "Widgets" } });
+      }
+    } catch (error) {
+      console.error("❌ Save error:", error);
+
+      let errorMessage = "위젯 저장에 실패했습니다.";
+      if (error.message.includes("400")) {
+        errorMessage =
+          "요청 데이터가 올바르지 않습니다. 모든 필드를 확인해주세요.";
+      } else if (error.message.includes("401")) {
+        errorMessage = "인증에 실패했습니다. API 키를 확인해주세요.";
+      }
+
+      alert(`${errorMessage}\n\n상세: ${error.message}`);
+    } finally {
+      setSaving(false);
+      setShowDashboardModal(false);
     }
+  };
+
+  // Save 버튼 클릭 핸들러
+  const handleSave = () => {
+    setShowDashboardModal(true);
   };
 
   return (
@@ -273,7 +320,7 @@ export default function NewWidgetPage() {
         </div>
       )}
 
-      {/* Left */}
+      {/* 왼쪽 패널 - 설정 */}
       <div className={styles.leftPane}>
         <div className={styles.section}>
           <h3>Data Selection</h3>
@@ -298,7 +345,9 @@ export default function NewWidgetPage() {
           </div>
 
           <div className={styles.block}>
-            <label className={styles.label}>Breakdown Dimension (Optional)</label>
+            <label className={styles.label}>
+              Breakdown Dimension (Optional)
+            </label>
             <select
               className={styles.select}
               value={dimension}
@@ -324,7 +373,9 @@ export default function NewWidgetPage() {
             <input
               className={styles.input}
               value={name}
-              onChange={(e) => setTexts((t) => ({ ...t, name: e.target.value }))}
+              onChange={(e) =>
+                setTexts((t) => ({ ...t, name: e.target.value }))
+              }
               placeholder="Widget name"
             />
           </div>
@@ -334,7 +385,9 @@ export default function NewWidgetPage() {
             <input
               className={styles.input}
               value={description}
-              onChange={(e) => setTexts((t) => ({ ...t, description: e.target.value }))}
+              onChange={(e) =>
+                setTexts((t) => ({ ...t, description: e.target.value }))
+              }
               placeholder="Widget description"
             />
           </div>
@@ -368,14 +421,18 @@ export default function NewWidgetPage() {
             </div>
           ) : !isTimeSeriesChart(chartType) ? (
             <div className={styles.block}>
-              <label className={styles.label}>Breakdown Row Limit (0-1000)</label>
+              <label className={styles.label}>
+                Breakdown Row Limit (0-1000)
+              </label>
               <input
                 type="number"
                 min={0}
                 max={1000}
                 className={styles.input}
                 value={rowLimit}
-                onChange={(e) => setRowLimit(parseInt(e.target.value || "100", 10))}
+                onChange={(e) =>
+                  setRowLimit(parseInt(e.target.value || "100", 10))
+                }
               />
             </div>
           ) : null}
@@ -383,14 +440,14 @@ export default function NewWidgetPage() {
           <button
             className={styles.primaryBtn}
             onClick={handleSave}
-            disabled={loading}
+            disabled={loading || saving}
           >
-            Save Widget
+            {saving ? "저장 중..." : "Save Widget"}
           </button>
         </div>
       </div>
 
-      {/* Right - Preview */}
+      {/* 오른쪽 패널 - 미리보기 */}
       <div className={styles.rightPane}>
         <div className={styles.previewHeader}>
           <div className={styles.previewTitle}>{name}</div>
@@ -418,6 +475,15 @@ export default function NewWidgetPage() {
           </div>
         </div>
       </div>
+
+      {/* Dashboard Selection Modal */}
+      <DashboardModal
+        isOpen={showDashboardModal}
+        onClose={() => setShowDashboardModal(false)}
+        onSave={handleSaveWithDashboard}
+        projectId={projectId}
+        api={api}
+      />
     </div>
   );
 }
